@@ -2,19 +2,24 @@ import { AiFeature } from "./types";
 
 export const editableModelPricing = [
   {
-    name: "GPT-5.3-Codex",
-    inputCostPerMillionTokens: 4,
-    outputCostPerMillionTokens: 16,
-  },
-  {
     name: "GPT-5.5",
     inputCostPerMillionTokens: 5,
-    outputCostPerMillionTokens: 20,
+    outputCostPerMillionTokens: 30,
+  },
+  {
+    name: "GPT-5.4",
+    inputCostPerMillionTokens: 2.5,
+    outputCostPerMillionTokens: 15,
   },
   {
     name: "GPT-5.4 mini",
-    inputCostPerMillionTokens: 0.4,
-    outputCostPerMillionTokens: 1.6,
+    inputCostPerMillionTokens: 0.75,
+    outputCostPerMillionTokens: 4.5,
+  },
+  {
+    name: "GPT-5.4 nano",
+    inputCostPerMillionTokens: 0.2,
+    outputCostPerMillionTokens: 1.25,
   },
   {
     name: "Generic cheap model",

@@ -15,10 +15,12 @@ import {
   GitCompare,
   HelpCircle,
   LineChart,
+  ListChecks,
   Plus,
   Radar,
   RefreshCw,
   Share2,
+  SlidersHorizontal,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -64,15 +66,32 @@ import {
   parseSharedScenario,
   saveScenarios,
 } from "@/lib/storage";
+import {
+  defaultSimulationSettings,
+  estimateAssetValue,
+  getExperimentPlan,
+  getIdeaScore,
+  SimulationSettings,
+  simulateGrowth,
+} from "@/lib/simulator";
 import { AiFeature, Scenario } from "@/lib/types";
 
-type PageKey = "dashboard" | "builder" | "ai" | "pricing" | "risk" | "compare" | "about";
+type PageKey =
+  | "dashboard"
+  | "builder"
+  | "ai"
+  | "pricing"
+  | "simulator"
+  | "risk"
+  | "compare"
+  | "about";
 
 const navItems: { key: PageKey; label: string; icon: typeof Gauge }[] = [
   { key: "dashboard", label: "Dashboard", icon: Gauge },
   { key: "builder", label: "Scenario Builder", icon: Calculator },
   { key: "ai", label: "AI/API Cost Guard", icon: Bot },
   { key: "pricing", label: "Break-even & Pricing", icon: LineChart },
+  { key: "simulator", label: "Growth Simulator", icon: SlidersHorizontal },
   { key: "risk", label: "Risk Radar", icon: Radar },
   { key: "compare", label: "Comparison", icon: GitCompare },
   { key: "about", label: "How it works", icon: HelpCircle },
@@ -348,6 +367,7 @@ export default function Home() {
               />
             ) : null}
             {page === "pricing" ? <Pricing scenario={activeScenario} result={result} /> : null}
+            {page === "simulator" ? <GrowthSimulator scenario={activeScenario} /> : null}
             {page === "risk" ? <RiskRadarPage scenario={activeScenario} result={result} /> : null}
             {page === "compare" ? (
               <Comparison
@@ -546,6 +566,136 @@ function ScenarioBuilder({
         <NumberField label="Payment fee %" value={scenario.paymentFeePercent} onChange={(v) => updateNumber("paymentFeePercent", v)} />
         <NumberField label="Payment fixed fee" value={scenario.paymentFeeFixed} onChange={(v) => updateNumber("paymentFeeFixed", v)} />
       </Card>
+    </div>
+  );
+}
+
+function GrowthSimulator({ scenario }: { scenario: Scenario }) {
+  const [settings, setSettings] = useState<SimulationSettings>(() =>
+    defaultSimulationSettings(scenario),
+  );
+
+  useEffect(() => {
+    setSettings(defaultSimulationSettings(scenario));
+  }, [scenario]);
+
+  const simulation = useMemo(() => simulateGrowth(scenario, settings), [scenario, settings]);
+  const ideaScore = getIdeaScore(scenario);
+  const asset = estimateAssetValue(scenario);
+  const experiments = getExperimentPlan(scenario);
+  const finalMonth = simulation[simulation.length - 1];
+  const firstMonth = simulation[0];
+
+  function updateSetting(key: keyof SimulationSettings, value: string) {
+    setSettings((current) => ({ ...current, [key]: Number(value) || 0 }));
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Metric
+          label="Idea score"
+          value={`${ideaScore.score}/100`}
+          tone={ideaScore.score >= 70 ? "good" : ideaScore.score < 50 ? "bad" : undefined}
+        />
+        <Metric label="Verdict" value={ideaScore.verdict} />
+        <Metric label="Month 12 MRR" value={money(finalMonth.mrr, scenario.currency)} />
+        <Metric label="Estimated asset value" value={money(asset.estimatedValue, scenario.currency)} />
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+        <Card title="Simulation controls">
+          <div className="grid gap-3 md:grid-cols-2">
+            <NumberField label="Months" value={settings.months} onChange={(v) => updateSetting("months", v)} />
+            <NumberField label="Starting paid users" value={settings.startingPaidUsers} onChange={(v) => updateSetting("startingPaidUsers", v)} />
+            <NumberField label="Starting free users" value={settings.startingFreeUsers} onChange={(v) => updateSetting("startingFreeUsers", v)} />
+            <NumberField label="New paid users / month" value={settings.monthlyNewPaidUsers} onChange={(v) => updateSetting("monthlyNewPaidUsers", v)} />
+            <NumberField label="Visitor growth % / month" value={settings.monthlyVisitorGrowthRate} onChange={(v) => updateSetting("monthlyVisitorGrowthRate", v)} />
+            <NumberField label="Free user growth % / month" value={settings.monthlyFreeUserGrowthRate} onChange={(v) => updateSetting("monthlyFreeUserGrowthRate", v)} />
+            <NumberField label="Price growth % / month" value={settings.priceGrowthRate} onChange={(v) => updateSetting("priceGrowthRate", v)} />
+            <NumberField label="AI usage growth % / month" value={settings.aiUsageGrowthRate} onChange={(v) => updateSetting("aiUsageGrowthRate", v)} />
+            <NumberField label="Fixed cost growth % / month" value={settings.fixedCostGrowthRate} onChange={(v) => updateSetting("fixedCostGrowthRate", v)} />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Base churn, payment fees, token usage, and editable OpenAI/API model costs still come from Scenario Builder and AI/API Cost Guard.
+          </p>
+        </Card>
+
+        <ChartCard title="Revenue, costs, and profit over time">
+          <ResponsiveContainer width="100%" height={360}>
+            <AreaChart data={simulation}>
+              <CartesianGrid stroke="#263142" />
+              <XAxis dataKey="month" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Area dataKey="mrr" name="MRR" stroke="#14b8a6" fill="#14b8a633" />
+              <Area dataKey="totalCosts" name="Total costs" stroke="#f43f5e" fill="#f43f5e22" />
+              <Area dataKey="netProfit" name="Net profit" stroke="#6366f1" fill="#6366f122" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <ChartCard title="Variable and AI/API costs while scaling">
+          <ResponsiveContainer width="100%" height={300}>
+            <ReLineChart data={simulation}>
+              <CartesianGrid stroke="#263142" />
+              <XAxis dataKey="month" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Line dataKey="variableCosts" name="Variable costs" stroke="#f59e0b" strokeWidth={3} dot={false} />
+              <Line dataKey="aiCosts" name="AI/API costs" stroke="#f43f5e" strokeWidth={3} dot={false} />
+            </ReLineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <Card title="Founder experiment plan">
+          <div className="space-y-3">
+            {experiments.map((experiment) => (
+              <div key={experiment.title} className="rounded-lg border border-white/10 bg-slate-950/40 p-4">
+                <div className="flex items-start gap-3">
+                  <ListChecks className="mt-0.5 text-teal-300" size={18} />
+                  <div>
+                    <p className="font-medium">{experiment.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">{experiment.action}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card title="TrustMRR-style asset benchmark">
+          <dl className="space-y-3 text-sm">
+            {[
+              ["Month 1 MRR", money(firstMonth.mrr, scenario.currency)],
+              ["Month 12 MRR", money(finalMonth.mrr, scenario.currency)],
+              ["Month 12 AI/API cost", money(finalMonth.aiCosts, scenario.currency)],
+              ["Month 12 net profit", money(finalMonth.netProfit, scenario.currency)],
+              ["Estimated annual owner earnings", money(asset.sellerDiscretionaryEarnings, scenario.currency)],
+              ["Revenue multiple assumption", `${asset.revenueMultiple.toFixed(1)}x ARR`],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between border-b border-white/10 pb-2">
+                <dt className="text-slate-400">{label}</dt>
+                <dd className="font-medium">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+
+        <Card title="Idea score reasons">
+          <div className="grid gap-3 md:grid-cols-2">
+            {ideaScore.reasons.map((reason) => (
+              <div key={reason} className="rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                {reason}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

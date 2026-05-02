@@ -18,6 +18,8 @@ The app helps answer:
 - Break-even and Pricing page with practical founder readouts
 - Scenario Comparison for up to three saved scenarios
 - Risk Radar with a sensitivity table and founder recommendations
+- Interactive Growth Simulator for MRR, costs, AI/API spend, profit, and asset value over time
+- Idea Score, experiment plan, and TrustMRR-style asset benchmark
 - Scenario templates for common Micro-SaaS shapes
 - 10 built-in SaaS idea scenarios, including a TrustMRR-inspired revenue intelligence idea
 - Two demo scenarios:
@@ -79,7 +81,7 @@ If Pages is not enabled yet, open the repository on GitHub, go to **Settings →
 - No live model pricing
 - No server-side persistence for share links
 
-Model prices in the app are editable planning assumptions. Verify current provider pricing before making real launch decisions.
+Model prices in the app are editable planning assumptions. The OpenAI defaults were seeded from the public OpenAI API pricing page, but you should verify current provider pricing before making real launch decisions.
 
 ## Roadmap
 
