@@ -19,7 +19,7 @@ The app helps answer:
 - Scenario Comparison for up to three saved scenarios
 - Risk Radar with a sensitivity table and founder recommendations
 - Scenario templates for common Micro-SaaS shapes
-- 10 built-in SaaS idea scenarios, including a Trust-MAA-style compliance monitor
+- 10 built-in SaaS idea scenarios, including a TrustMRR-inspired revenue intelligence idea
 - Two demo scenarios:
   - Lean B2B Micro-SaaS
   - AI-heavy Freemium SaaS
