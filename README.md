@@ -19,6 +19,7 @@ The app helps answer:
 - Scenario Comparison for up to three saved scenarios
 - Risk Radar with a sensitivity table and founder recommendations
 - Scenario templates for common Micro-SaaS shapes
+- 10 built-in SaaS idea scenarios, including a Trust-MAA-style compliance monitor
 - Two demo scenarios:
   - Lean B2B Micro-SaaS
   - AI-heavy Freemium SaaS
@@ -54,6 +55,18 @@ npm run build
 4. Deploy.
 
 No environment variables are required for v0.1.
+
+## Deploy to GitHub Pages
+
+This repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+
+After pushing to `main`, GitHub can build and publish the static app to:
+
+```text
+https://niklasnikvisualsmedia333.github.io/micro-saas-unit-economics-studio/
+```
+
+If Pages is not enabled yet, open the repository on GitHub, go to **Settings → Pages**, and choose **GitHub Actions** as the source.
 
 ## Intentionally not included in v0.1
 
